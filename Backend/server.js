@@ -13,10 +13,15 @@ connectDB(); // Connect to MongoDB
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST']
+    origin: [
+      process.env.FRONTEND_URL,       // deployed frontend
+      process.env.FRONTEND_DEV_URL    // local frontend
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
+
 
 // Initialize Socket Manager
 const socketManager = require('./Utils/SocketManager');
