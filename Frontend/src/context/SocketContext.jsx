@@ -14,11 +14,13 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     // Create socket connection
     const socketInstance = io(import.meta.env.VITE_API_URL || 'http://localhost:8000', {
+      transports: ['websocket'], // Force WebSocket only
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
+  
     
     // Socket event listeners
     socketInstance.on('connect', () => {
