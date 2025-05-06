@@ -45,7 +45,7 @@ io.on('connection', (socket) => {
 
 const cors = require('cors');
 app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend URL
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
