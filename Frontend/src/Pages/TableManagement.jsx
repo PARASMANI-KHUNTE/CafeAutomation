@@ -22,7 +22,6 @@ const TableManagement = () => {
   
   // QR Code modal state
   const [showQRModal, setShowQRModal] = useState(false);
-  const [selectedTable, setSelectedTable] = useState(null);
   
   // Load tables when component mounts
   useEffect(() => {
@@ -114,17 +113,14 @@ const TableManagement = () => {
     setShowForm(false);
   };
   
-  const handleShowQR = (table) => {
-    setSelectedTable(table);
+  const handleShowLandingPageQR = () => {
     setShowQRModal(true);
   };
   
   const downloadQRCode = () => {
-    if (!selectedTable) return;
-    
-    const canvas = document.getElementById('table-qrcode');
+    const canvas = document.getElementById('landing-page-qrcode');
     canvas.toBlob(function(blob) {
-      saveAs(blob, `table-${selectedTable.tableNumber}-qrcode.png`);
+      saveAs(blob, `cafe-landing-page-qrcode.png`);
     });
   };
   
@@ -133,13 +129,22 @@ const TableManagement = () => {
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Table Management</h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
-          >
-            <PlusCircle size={18} className="mr-2" />
-            Add New Table
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={handleShowLandingPageQR}
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <QrCode size={18} className="mr-2" />
+              Landing Page QR
+            </button>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+            >
+              <PlusCircle size={18} className="mr-2" />
+              Add New Table
+            </button>
+          </div>
         </div>
         
         {error && (
@@ -292,12 +297,6 @@ const TableManagement = () => {
                       >
                         Delete
                       </button>
-                      <button 
-                        onClick={() => handleShowQR(table)}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        QR Code
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -306,13 +305,13 @@ const TableManagement = () => {
           </div>
         )}
         
-        {/* QR Code Modal */}
-        {showQRModal && selectedTable && (
+        {/* Landing Page QR Code Modal */}
+        {showQRModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">
-                  Table {selectedTable.tableNumber} QR Code
+                  Cafe Landing Page QR Code
                 </h2>
                 <button
                   onClick={() => setShowQRModal(false)}
@@ -324,14 +323,14 @@ const TableManagement = () => {
               
               <div className="flex flex-col items-center mb-4">
                 <QRCodeCanvas
-                  id="table-qrcode"
-                  value={selectedTable.qrCode}
+                  id="landing-page-qrcode"
+                  value={`${window.location.origin}`}
                   size={200}
                   level="H"
                   includeMargin={true}
                 />
                 <p className="mt-2 text-sm text-gray-600">
-                  Scan this QR code to access the menu for Table {selectedTable.tableNumber}
+                  Scan this QR code to access the cafe landing page
                 </p>
               </div>
               
