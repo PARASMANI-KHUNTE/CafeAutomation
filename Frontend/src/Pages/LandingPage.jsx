@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useOrder } from '../context/OrderContext';
 import { authAPI, menuAPI, orderAPI } from '../services/api';
 import Cookies from 'js-cookie';
+import config from '../config';
 
 const LandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -56,7 +57,7 @@ const LandingPage = () => {
     // Load available tables
     const loadTables = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/tables');
+        const response = await fetch(`${config.API_URL}/tables`);
         const data = await response.json();
         setTables(data);
       } catch (err) {
@@ -279,50 +280,6 @@ const LandingPage = () => {
           </div>
         )}
 
-        {/* Cart */}
-        {activeSection === 'menu' && (
-          <div className="mb-8">
-            <div className="bg-white rounded-lg shadow-md p-4 max-w-xl mx-auto">
-              <h2 className="text-2xl font-bold text-amber-800 mb-4">Your Order</h2>
-              {cart.length === 0 ? (
-                <p className="text-gray-500">Your cart is empty</p>
-              ) : (
-                <>
-                  <div className="space-y-4">
-                    {cart.map((item) => (
-                      <div key={item._id} className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-semibold">{item.name}</h3>
-                          <p className="text-amber-700">${item.price}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button onClick={() => updateQuantity(item._id, item.quantity - 1)} className="px-2 py-1 bg-gray-200 rounded">-</button>
-                          <span>{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item._id, item.quantity + 1)} className="px-2 py-1 bg-gray-200 rounded">+</button>
-                          <button onClick={() => removeFromCart(item._id)} className="text-red-600 hover:text-red-700">Remove</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 pt-4 border-t">
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Total:</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
-                    </div>
-                    <button
-                      onClick={handlePlaceOrder}
-                      disabled={loading}
-                      className={`w-full mt-4 bg-amber-600 text-white py-2 rounded-lg hover:bg-amber-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      {loading ? 'Placing Order...' : 'Place Order'}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Menu */}
         {activeSection === 'menu' && (
           <div>
@@ -347,7 +304,7 @@ const LandingPage = () => {
                   <h3 className="text-xl font-semibold text-amber-800">{item.name}</h3>
                   <p className="text-gray-600 mb-2 flex-1">{item.description}</p>
                   <div className="flex justify-between items-center mt-2">
-                    <span className="text-lg font-bold text-amber-700">${item.price}</span>
+                    <span className="text-lg font-bold text-amber-700">₹{item.price}</span>
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">{item.category}</span>
                   </div>
                   <button
@@ -482,7 +439,7 @@ const LandingPage = () => {
                       <div key={item._id} className="flex justify-between items-center">
                         <div>
                           <h3 className="font-semibold">{item.name}</h3>
-                          <p className="text-amber-700">${item.price}</p>
+                          <p className="text-amber-700">₹{item.price}</p>
                         </div>
                         <div className="flex items-center space-x-2">
                           <button
@@ -511,7 +468,7 @@ const LandingPage = () => {
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex justify-between text-xl font-bold mb-4">
                       <span>Total:</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
+                      <span>₹{calculateTotal().toFixed(2)}</span>
                     </div>
                     <button
                       onClick={() => {

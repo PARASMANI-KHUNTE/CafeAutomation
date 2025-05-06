@@ -4,6 +4,7 @@ import AdminLayout from '../components/AdminLayout';
 import { QRCodeCanvas } from 'qrcode.react';
 import { saveAs } from 'file-saver';
 import axios from 'axios';
+import config from '../config';
 
 const TableManagement = () => {
   const [tables, setTables] = useState([]);
@@ -29,14 +30,14 @@ const TableManagement = () => {
   }, []);
   
   const fetchTables = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await axios.get('http://localhost:8000/api/tables');
+      const response = await axios.get(`${config.API_URL}/tables`);
       setTables(response.data);
-      setError(null);
+      setError('');
     } catch (err) {
-      setError('Failed to load tables');
-      console.error('Error loading tables:', err);
+      console.error('Error fetching tables:', err);
+      setError('Failed to load tables. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -44,21 +45,19 @@ const TableManagement = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setLoading(true);
+    setError('');
+
     try {
-      setLoading(true);
-      
       if (editMode && currentTable) {
-        // Update existing table
-        await axios.put(`http://localhost:8000/api/tables/${currentTable._id}`, {
+        await axios.put(`${config.API_URL}/tables/${currentTable._id}`, {
           tableNumber: parseInt(tableNumber),
           status: tableStatus,
           capacity: parseInt(capacity),
           location
         });
       } else {
-        // Create new table
-        await axios.post('http://localhost:8000/api/tables', {
+        await axios.post(`${config.API_URL}/tables`, {
           tableNumber: parseInt(tableNumber),
           capacity: parseInt(capacity),
           location
@@ -90,17 +89,18 @@ const TableManagement = () => {
   };
   
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this table?')) return;
-    
-    try {
+    if (window.confirm('Are you sure you want to delete this table?')) {
       setLoading(true);
-      await axios.delete(`http://localhost:8000/api/tables/${id}`);
-      fetchTables();
-    } catch (err) {
-      setError('Failed to delete table');
-      console.error('Error deleting table:', err);
-    } finally {
-      setLoading(false);
+      try {
+        await axios.delete(`${config.API_URL}/tables/${id}`);
+        fetchTables();
+        setError('');
+      } catch (err) {
+        console.error('Error deleting table:', err);
+        setError('Failed to delete table. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
   

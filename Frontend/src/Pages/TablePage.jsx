@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, X, Coffee, ArrowLeft, Plus, Minus } from 'lucide-react';
 import { menuAPI, orderAPI } from '../services/api';
 import { useOrder } from '../context/OrderContext';
+import config from '../config';
 import Cookies from 'js-cookie';
 
 const TablePage = () => {
@@ -30,14 +31,14 @@ const TablePage = () => {
   useEffect(() => {
     const fetchTable = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/tables/number/${tableNumber}`);
+        const response = await fetch(`${config.API_URL}/tables/number/${tableNumber}`);
         if (!response.ok) {
           throw new Error('Table not found');
         }
         const data = await response.json();
         setTable(data);
-      } catch (error) {
-        console.error('Error fetching table:', error);
+      } catch (err) {
+        console.error('Error fetching table:', err);
         setError('Invalid table or QR code');
       } finally {
         setLoading(false);
