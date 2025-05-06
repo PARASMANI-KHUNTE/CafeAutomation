@@ -58,10 +58,14 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+app.get('/test', (req, res) => {
+  res.send('Hello World!');
+});
 // Import routers
 const authRouter = require('./Router/AuthRouter.js');
 const menuRouter = require('./Router/MenuRouter.js');
