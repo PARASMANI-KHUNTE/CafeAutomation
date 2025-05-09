@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useOrder } from '../context/OrderContext';
 import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../context/AuthContext';
 import { orderAPI } from '../services/api';
-import { Filter, Clock, RefreshCw, User, Phone, FileText } from 'lucide-react';
+import { Filter, Clock, RefreshCw, User, Phone, FileText, LogOut } from 'lucide-react';
 
 const KitchenPanel = () => {
   const [orders, setOrders] = useState([]);
@@ -12,6 +14,13 @@ const KitchenPanel = () => {
   const [filteredOrders, setFilteredOrders] = useState([]);
   const { updateOrderStatus } = useOrder();
   const { subscribeToKitchenUpdates } = useSocket();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   // Load orders initially and set up Socket.io for real-time updates
   useEffect(() => {
@@ -147,6 +156,14 @@ const KitchenPanel = () => {
             >
               <RefreshCw size={16} />
               Refresh
+            </button>
+            
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 transition-colors"
+            >
+              <LogOut size={16} />
+              Logout
             </button>
           </div>
         </div>

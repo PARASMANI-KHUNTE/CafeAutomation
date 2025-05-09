@@ -13,7 +13,7 @@ export const SocketProvider = ({ children }) => {
   // Initialize socket connection
   useEffect(() => {
     // Create socket connection
-    const socketInstance = io(import.meta.env.VITE_API_URL || 'http://localhost:8000', {
+    const socketInstance = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000', {
       transports: ['websocket'], // Force WebSocket only
       autoConnect: true,
       reconnection: true,
