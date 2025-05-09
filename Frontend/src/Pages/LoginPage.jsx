@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Coffee, Lock, Mail, AlertCircle, Loader } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
 
@@ -102,9 +102,9 @@ const LoginPage = () => {
                 />
               </div>
               <div className="mt-2 text-right">
-                <a href="/forgot-password" className="text-sm text-amber-700 hover:text-amber-600 transition-colors">
+                <Link to="/forgot-password" className="text-sm text-amber-700 hover:text-amber-600 transition-colors">
                   Forgot Password?
-                </a>
+                </Link>
               </div>
             </div>
             

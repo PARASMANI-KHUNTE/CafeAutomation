@@ -55,6 +55,22 @@ export const authAPI = {
   deleteUser: async (id) => {
     const response = await api.delete(`/auth/${id}`);
     return response.data;
+  },
+  
+  // Password reset endpoints
+  forgotPassword: async (email) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+  
+  verifyOtp: async (email, otp) => {
+    const response = await api.post('/auth/verify-otp', { email, otp });
+    return response.data;
+  },
+  
+  resetPassword: async (email, otp, newPassword) => {
+    const response = await api.post('/auth/reset-password', { email, otp, newPassword });
+    return response.data;
   }
 };
 

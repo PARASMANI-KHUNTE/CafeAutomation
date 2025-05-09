@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './Pages/LoginPage'
+import ForgotPassword from './Pages/ForgotPassword'
 import HomePage from './Pages/HomePage'
 import MenuManagementPage from './Pages/MenuManagementPage'
 import LandingPage from './Pages/LandingPage'
@@ -44,6 +45,9 @@ const AppRoutes = () => {
             : <LoginPage />
         }
       />
+
+      {/* Forgot Password route */}
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* Protected admin routes */}
       <Route

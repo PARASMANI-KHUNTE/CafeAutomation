@@ -2,6 +2,7 @@ const User = require('../Model/User');
 
 const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
+const { sendOTP, verifyOTP, clearOTP } = require('../Utils/OtpServices');
 const JWT_SECRET  = process.env.JWT_SECRET;
 
 const register = async (req, res) => {
@@ -129,4 +130,124 @@ const getAllUsers = async (req, res) => {
     }
 };
 
-module.exports = { register, login, updateUser, deleteUser, getAllUsers };
+// Request OTP for password reset
+const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+    
+    try {
+        // Check if user exists
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        // Generate and send OTP
+        const otp = await sendOTP(email);
+        
+        return res.status(200).json({ 
+            message: 'OTP sent successfully to your email',
+            email
+        });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        return res.status(500).json({ 
+            message: 'Failed to send OTP',
+            details: error.message 
+        });
+    }
+};
+
+// Verify OTP and reset password
+const resetPassword = async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+    
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ 
+            message: 'Missing required fields',
+            details: {
+                email: !email ? 'Email is required' : null,
+                otp: !otp ? 'OTP is required' : null,
+                newPassword: !newPassword ? 'New password is required' : null
+            }
+        });
+    }
+    
+    try {
+        // Verify the OTP
+        const isOtpValid = await verifyOTP(email, otp);
+        
+        if (!isOtpValid) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+        
+        // Find the user
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        // Hash the new password
+        const hashedPassword = await argon2.hash(newPassword);
+        
+        // Update the user's password
+        user.password = hashedPassword;
+        await user.save();
+        
+        // Clear the OTP after successful password reset
+        clearOTP(email);
+        
+        return res.status(200).json({ message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        return res.status(500).json({ 
+            message: 'Failed to reset password',
+            details: error.message 
+        });
+    }
+};
+
+// Verify OTP only (for two-step verification)
+const verifyOtpOnly = async (req, res) => {
+    const { email, otp } = req.body;
+    
+    if (!email || !otp) {
+        return res.status(400).json({ 
+            message: 'Email and OTP are required'
+        });
+    }
+    
+    try {
+        // Verify the OTP
+        const isOtpValid = await verifyOTP(email, otp);
+        
+        if (!isOtpValid) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+        
+        return res.status(200).json({ 
+            message: 'OTP verified successfully',
+            verified: true
+        });
+    } catch (error) {
+        console.error('OTP verification error:', error);
+        return res.status(500).json({ 
+            message: 'Failed to verify OTP',
+            details: error.message 
+        });
+    }
+};
+
+module.exports = { 
+    register, 
+    login, 
+    updateUser, 
+    deleteUser, 
+    getAllUsers,
+    forgotPassword,
+    resetPassword,
+    verifyOtpOnly
+};
