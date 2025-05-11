@@ -202,5 +202,46 @@ const getCustomerOrders = async (req, res) => {
     }
 }
 
-module.exports = { createOrder, updateOrder, deleteOrder, getOrder, getAllOrders, addMoreItems, getCustomerOrders };
+// Handle customer assistance requests
+const requestAssistance = async (req, res) => {
+    const { orderId, customerName, tableNumber, message } = req.body;
+
+    if (!orderId || !tableNumber) {
+        return res.status(400).json({ message: 'Order ID and table number are required' });
+    }
+
+    try {
+        // Get the order to verify it exists
+        const order = await Order.findById(orderId);
+        
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // Create alert data
+        const alertData = {
+            orderId,
+            customerName: customerName || 'Customer',
+            tableNumber,
+            message: message || 'Assistance needed',
+            timestamp: new Date()
+        };
+
+        // Emit the alert via Socket.io
+        socketManager.emitCustomerAssistanceAlert(alertData);
+
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Assistance request sent successfully' 
+        });
+    } catch (error) {
+        console.error('Error requesting assistance:', error);
+        return res.status(500).json({ 
+            message: 'Failed to request assistance', 
+            error: error.message 
+        });
+    }
+};
+
+module.exports = { createOrder, updateOrder, deleteOrder, getOrder, getAllOrders, addMoreItems, getCustomerOrders, requestAssistance };
 

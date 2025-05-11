@@ -4,7 +4,8 @@ import { useOrder } from '../context/OrderContext';
 import { useSocket } from '../context/SocketContext';
 import { useNavigate } from 'react-router-dom';
 import { menuAPI, orderAPI } from '../services/api';
-import { PlusCircle, X, ShoppingCart } from 'lucide-react';
+import { PlusCircle, X, ShoppingCart, Bell, AlertTriangle } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const CustomerOrders = () => {
   const { orderHistory, loadOrderHistory, createOrder, setOrderHistory, loading, addItemsToOrder } = useOrder();
@@ -298,6 +299,46 @@ const CustomerOrders = () => {
       });
   };
 
+  // Handler for customer assistance request
+  const handleRequestAssistance = async (order) => {
+    // Get table number
+    let tableNumber = getTableNumber(order);
+    
+    // Get customer name
+    const customerName = order.customerName || 'Customer';
+    
+    try {
+      // Play alert sound
+      const alertSound = new Audio('/alert.mp3');
+      alertSound.play().catch(e => console.error('Error playing sound:', e));
+      
+      // Send assistance request to server
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/orders/assistance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: order._id,
+          customerName,
+          tableNumber,
+          message: 'Customer needs assistance'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success('Assistance request sent successfully!');
+      } else {
+        toast.error('Failed to send assistance request. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error requesting assistance:', error);
+      toast.error('Failed to send assistance request. Please try again.');
+    }
+  };
+  
   // Handler for "Generate Receipt" button
   const handleGenerateReceipt = (order) => {
     // Create a receipt window
@@ -513,13 +554,22 @@ const CustomerOrders = () => {
                   
                   {/* Options for orders that are not completed */}
                   {order.status !== 'completed' && (
-                    <button
-                      onClick={() => handleAddMoreItems(order)}
-                      className="w-full py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center justify-center gap-2"
-                    >
-                      <PlusCircle size={16} />
-                      <span>Add More Items</span>
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAddMoreItems(order)}
+                        className="flex-1 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center justify-center gap-2"
+                      >
+                        <PlusCircle size={16} />
+                        <span>Add More Items</span>
+                      </button>
+                      <button
+                        onClick={() => handleRequestAssistance(order)}
+                        className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+                      >
+                        <Bell size={16} />
+                        <span>Request Assistance</span>
+                      </button>
+                    </div>
                   )}
                   
                   {/* Options for completed orders */}

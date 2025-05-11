@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { orderAPI } from '../services/api';
+import CustomerAssistanceAlert from '../components/CustomerAssistanceAlert';
+import { useSocket } from '../context/SocketContext';
 
 const DashboardPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeRange, setTimeRange] = useState('today');
+  const { subscribeToKitchenUpdates } = useSocket();
   const [stats, setStats] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -14,12 +17,7 @@ const DashboardPage = () => {
     popularItems: []
   });
 
-  useEffect(() => {
-    fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const data = await orderAPI.getOrders();
@@ -36,7 +34,25 @@ const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange]);
+  
+  // Subscribe to kitchen updates for real-time data
+  useEffect(() => {
+    const unsubscribe = subscribeToKitchenUpdates((eventType) => {
+      if (eventType === 'newOrder' || eventType === 'orderUpdated' || eventType === 'statusChanged') {
+        fetchOrders();
+      }
+    });
+    
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [subscribeToKitchenUpdates, fetchOrders]);
 
   const filterOrdersByTimeRange = (orders, range) => {
     const now = new Date();
@@ -233,134 +249,139 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Dashboard</h1>
-        <div className="flex space-x-4">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="border border-gray-300 rounded-md p-2"
-          >
-            <option value="today">Today</option>
-            <option value="week">Last 7 Days</option>
-            <option value="month">Last 30 Days</option>
-            <option value="year">Last Year</option>
-          </select>
-          <button
-            onClick={fetchOrders}
-            className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Total Sales</h2>
-          <p className="text-3xl font-bold text-amber-600">₹{stats.totalSales.toFixed(2)}</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Total Orders</h2>
-          <p className="text-3xl font-bold text-amber-600">{stats.totalOrders}</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Average Order</h2>
-          <p className="text-3xl font-bold text-amber-600">₹{stats.averageOrderValue.toFixed(2)}</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">Orders by Day</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={getOrdersByDay(filterOrdersByTimeRange(orders, timeRange))}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="orders" fill="#8884d8" name="Orders" />
-                <Bar dataKey="sales" fill="#82ca9d" name="Sales (₹)" />
-              </BarChart>
-            </ResponsiveContainer>
+    <>
+      {/* Customer Assistance Alert Component */}
+      <CustomerAssistanceAlert />
+      
+      <div className="space-y-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Dashboard</h1>
+          <div className="flex space-x-4">
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="border border-gray-300 rounded-md p-2"
+            >
+              <option value="today">Today</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">Last 30 Days</option>
+              <option value="year">Last Year</option>
+            </select>
+            <button
+              onClick={fetchOrders}
+              className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700"
+            >
+              Refresh
+            </button>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">Order Status</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={getOrdersByStatus(filterOrdersByTimeRange(orders, timeRange))}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">Total Sales</h2>
+            <p className="text-3xl font-bold text-amber-600">₹{stats.totalSales.toFixed(2)}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">Total Orders</h2>
+            <p className="text-3xl font-bold text-amber-600">{stats.totalOrders}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">Average Order</h2>
+            <p className="text-3xl font-bold text-amber-600">₹{stats.averageOrderValue.toFixed(2)}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Orders by Day</h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={getOrdersByDay(filterOrdersByTimeRange(orders, timeRange))}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
-                  {getOrdersByStatus(filterOrdersByTimeRange(orders, timeRange)).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="orders" fill="#8884d8" name="Orders" />
+                  <Bar dataKey="sales" fill="#82ca9d" name="Sales (₹)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Order Status</h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={getOrdersByStatus(filterOrdersByTimeRange(orders, timeRange))}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {getOrdersByStatus(filterOrdersByTimeRange(orders, timeRange)).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">Popular Items</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Item
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Quantity Sold
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Revenue
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {stats.popularItems.map((item, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{item.count}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">₹{item.revenue.toFixed(2)}</div>
+                    </td>
+                  </tr>
+                ))}
+                {stats.popularItems.length === 0 && (
+                  <tr>
+                    <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">
+                      No data available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Popular Items</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Item
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quantity Sold
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Revenue
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {stats.popularItems.map((item, index) => (
-                <tr key={index}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{item.count}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">₹{item.revenue.toFixed(2)}</div>
-                  </td>
-                </tr>
-              ))}
-              {stats.popularItems.length === 0 && (
-                <tr>
-                  <td colSpan="3" className="px-6 py-4 text-center text-sm text-gray-500">
-                    No data available
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
 

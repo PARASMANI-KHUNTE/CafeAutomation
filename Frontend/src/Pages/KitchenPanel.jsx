@@ -5,6 +5,7 @@ import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import { orderAPI } from '../services/api';
 import { Filter, Clock, RefreshCw, User, Phone, FileText, LogOut } from 'lucide-react';
+import CustomerAssistanceAlert from '../components/CustomerAssistanceAlert';
 
 const KitchenPanel = () => {
   const [orders, setOrders] = useState([]);
@@ -13,7 +14,7 @@ const KitchenPanel = () => {
   const [filter, setFilter] = useState('');
   const [filteredOrders, setFilteredOrders] = useState([]);
   const { updateOrderStatus } = useOrder();
-  const { subscribeToKitchenUpdates } = useSocket();
+  const { subscribeToKitchenUpdates, socket } = useSocket();
   const { logout } = useAuth();
   const navigate = useNavigate();
   
@@ -26,6 +27,12 @@ const KitchenPanel = () => {
   useEffect(() => {
     // Initial load of orders
     loadOrders();
+    
+    // Explicitly join the kitchen room
+    if (socket) {
+      socket.emit('joinKitchen');
+      console.log('KitchenPanel: Explicitly joining kitchen room');
+    }
     
     // Subscribe to kitchen updates via Socket.io
     const unsubscribe = subscribeToKitchenUpdates((eventType, data) => {
@@ -55,7 +62,7 @@ const KitchenPanel = () => {
         unsubscribe();
       }
     };
-  }, [subscribeToKitchenUpdates]);
+  }, [socket, subscribeToKitchenUpdates]);
   
   // Filter orders whenever the orders array or filter value changes
   useEffect(() => {
@@ -129,7 +136,9 @@ const KitchenPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-100 p-4">
+      {/* Customer Assistance Alert Component */}
+      <CustomerAssistanceAlert />
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Kitchen Orders</h1>

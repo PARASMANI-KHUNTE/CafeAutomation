@@ -110,11 +110,17 @@ export const SocketProvider = ({ children }) => {
       callback('statusChanged', data);
     });
     
+    // Listen for customer assistance alerts
+    socket.on('customerAssistanceAlert', (alertData) => {
+      callback('customerAssistanceAlert', alertData);
+    });
+    
     // Return unsubscribe function
     return () => {
       socket.off('newOrder');
       socket.off('orderUpdated');
       socket.off('orderStatusChanged');
+      socket.off('customerAssistanceAlert');
     };
   };
   
