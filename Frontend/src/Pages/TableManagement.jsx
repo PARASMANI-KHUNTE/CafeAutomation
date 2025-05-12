@@ -135,7 +135,7 @@ const TableManagement = () => {
               className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
               <QrCode size={18} className="mr-2" />
-              Landing Page QR
+              Generate QR Code
             </button>
             <button
               onClick={() => setShowForm(!showForm)}

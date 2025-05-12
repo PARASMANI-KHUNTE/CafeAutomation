@@ -173,7 +173,7 @@ const MenuManagementPage = () => {
               <div className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                  <span className="text-amber-600 font-bold">${item.price}</span>
+                  <span className="text-amber-600 font-bold">₹{item.price}</span>
                 </div>
                 <p className="text-gray-600 text-sm mb-2">{item.description}</p>
                 <div className="flex justify-between items-center">
