@@ -6,7 +6,17 @@ const createOrder = async (req, res) => {
     try {
         console.log('Create order request body:', JSON.stringify(req.body, null, 2));
         
-        const { tableId, items, totalAmount, customerName, customerPhone, sessionToken: bodySessionToken } = req.body;
+        const { 
+            tableId, 
+            items, 
+            totalAmount, 
+            customerName, 
+            customerPhone, 
+            sessionToken: bodySessionToken,
+            discounts,
+            discountAmount,
+            finalAmount 
+        } = req.body;
         // Get session token from header or body
         const sessionToken = req.headers['x-session-token'] || bodySessionToken || 'guest-' + Date.now();
 
@@ -86,6 +96,11 @@ const createOrder = async (req, res) => {
         // Add optional fields if they exist
         if (customerName) orderData.customerName = customerName;
         if (customerPhone) orderData.customerPhone = customerPhone;
+        
+        // Add discount information if available
+        if (discounts) orderData.discounts = discounts;
+        if (discountAmount) orderData.discountAmount = discountAmount;
+        if (finalAmount) orderData.finalAmount = finalAmount;
         
         console.log('Creating order with data:', JSON.stringify(orderData, null, 2));
         

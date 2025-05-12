@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { BarChart2, Users, Coffee, LogOut, Table2, Tag, FileText, ShoppingBag, Menu, X, ChevronRight } from 'lucide-react';
+import { BarChart2, Users, Coffee, LogOut, Table2, Tag, FileText, ShoppingBag, Menu, X, ChevronRight, Percent } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const AdminNavbar = () => {
@@ -191,6 +191,23 @@ const AdminNavbar = () => {
               <div className="flex items-center">
                 <Table2 className="mr-3" size={18} />
                 <span>Table Management</span>
+              </div>
+              <ChevronRight size={16} className="opacity-50" />
+            </div>
+          </NavLink>
+          
+          <NavLink
+            to="/home/discounts"
+            className={({ isActive }) =>
+              `flex items-center p-3 rounded-lg transition-all ${isActive 
+                ? 'bg-amber-700 text-white font-medium shadow-md' 
+                : 'text-amber-100 hover:bg-amber-700/50 hover:text-white'}`
+            }
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center">
+                <Percent className="mr-3" size={18} />
+                <span>Discount Management</span>
               </div>
               <ChevronRight size={16} className="opacity-50" />
             </div>

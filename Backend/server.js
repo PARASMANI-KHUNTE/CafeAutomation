@@ -53,7 +53,7 @@ io.on('connection', (socket) => {
 const cors = require('cors');
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Replace with your frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,
 }));
 app.use(express.json());
@@ -72,6 +72,7 @@ const menuRouter = require('./Router/MenuRouter.js');
 const orderRouter = require('./Router/OrderRouter.js');
 const tableRouter = require('./Router/TableRouter.js');
 const categoryRouter = require('./Router/CategoryRouter.js');
+const discountRouter = require('./Router/DiscountRouter.js');
 
 // Use routers
 app.use('/api/auth', authRouter);
@@ -79,6 +80,7 @@ app.use('/api/menu', menuRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/tables', tableRouter);
 app.use('/api/categories', categoryRouter);
+app.use('/api/discounts', discountRouter);
 
 // Use HTTP server instead of Express app for Socket.io
 server.listen(port, () => {

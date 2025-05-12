@@ -144,6 +144,29 @@ export const orderAPI = {
       throw new Error('Table ID is required');
     }
     
+    try {
+      // First calculate applicable discounts
+      const discountResponse = await api.post('/discounts/calculate-bill', {
+        items: orderData.items.map(item => ({
+          itemId: item.menuItem,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        totalAmount: orderData.totalAmount
+      });
+      
+      // Add discount information to the order data
+      if (discountResponse.data) {
+        console.log('Discount calculation response:', discountResponse.data);
+        orderData.discounts = discountResponse.data.appliedDiscounts || [];
+        orderData.discountAmount = discountResponse.data.totalSavings || 0;
+        orderData.finalAmount = discountResponse.data.finalTotal || orderData.totalAmount;
+      }
+    } catch (error) {
+      console.error('Error calculating discounts:', error);
+      // Continue with order creation even if discount calculation fails
+    }
+    
     const response = await api.post('/orders', orderData);
     return response.data;
   },
@@ -213,4 +236,4 @@ export const orderAPI = {
   }
 };
 
-export default api; 
+export default api;

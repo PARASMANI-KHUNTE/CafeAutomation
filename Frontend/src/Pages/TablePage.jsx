@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, X, Coffee, ArrowLeft, Plus, Minus } from 'lucide-react';
 import { menuAPI, orderAPI } from '../services/api';
@@ -14,9 +14,10 @@ const TablePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [table, setTable] = useState(null);
-  const [menuItems, setMenuItems] = useState([]);
+  const [menu, setMenu] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [activeDiscounts, setActiveDiscounts] = useState([]);
   const [cart, setCart] = useState([]);
   const [showCartModal, setShowCartModal] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
@@ -50,18 +51,40 @@ const TablePage = () => {
 
   // Fetch menu items
   useEffect(() => {
-    const fetchMenu = async () => {
+    // Fetch menu items and active discounts
+    const fetchMenuAndDiscounts = async () => {
       try {
-        const data = await menuAPI.getAllMenu();
-        setMenuItems(data.filter(item => item.isAvailable));
-        const uniqueCategories = Array.from(new Set(data.map(item => item.category))).filter(Boolean);
-        setCategories(['All', ...uniqueCategories]);
-      } catch (err) {
-        console.error('Error fetching menu:', err);
-        setError('Failed to load menu items');
+        setLoading(true);
+        
+        // Fetch menu items
+        const menuResponse = await menuAPI.getAllMenu();
+        setMenu(menuResponse.filter(item => item.isAvailable));
+        
+        // Extract unique categories
+        const uniqueCategories = ['All', ...new Set(menuResponse.map(item => item.category))];
+        setCategories(uniqueCategories);
+        
+        // Fetch active discounts
+        try {
+          const discountResponse = await fetch(`${config.API_URL}/discounts/active`);
+          if (discountResponse.ok) {
+            const discountData = await discountResponse.json();
+            setActiveDiscounts(discountData);
+            console.log('Active discounts:', discountData);
+          }
+        } catch (discountError) {
+          console.error('Error fetching discounts:', discountError);
+          // Continue even if discount fetch fails
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching menu:', error);
+        setLoading(false);
       }
     };
-    fetchMenu();
+    
+    fetchMenuAndDiscounts();
   }, []);
 
   const addToCart = (item) => {
@@ -82,6 +105,82 @@ const TablePage = () => {
   };
 
   const calculateTotal = () => cart.reduce((t, i) => t + i.price * i.quantity, 0);
+  
+  // Function to find if an item has a discount
+  const getItemDiscount = (itemId, categoryId) => {
+    if (!activeDiscounts || activeDiscounts.length === 0) return null;
+    
+    // Check for item-specific discounts first
+    const itemDiscount = activeDiscounts.find(discount => 
+      discount.applicableType === 'item' && 
+      discount.applicableItems && 
+      discount.applicableItems.some(item => item === itemId)
+    );
+    
+    if (itemDiscount) return itemDiscount;
+    
+    // If no item-specific discount, check for category discounts
+    const categoryDiscount = activeDiscounts.find(discount => 
+      discount.applicableType === 'category' && 
+      discount.applicableCategories && 
+      discount.applicableCategories.some(category => category === categoryId)
+    );
+    
+    return categoryDiscount;
+  };
+  
+  // Function to calculate discounted price
+  const calculateDiscountedPrice = (originalPrice, discount) => {
+    if (!discount) return null;
+    
+    let discountedPrice = originalPrice;
+    
+    if (discount.discountType === 'percentage') {
+      discountedPrice = originalPrice - (originalPrice * (discount.discountValue / 100));
+    } else if (discount.discountType === 'fixed') {
+      discountedPrice = originalPrice - discount.discountValue;
+    }
+    
+    return Math.max(discountedPrice, 0); // Ensure price doesn't go below zero
+  };
+
+  // Function to calculate discounts directly
+  const calculateDiscounts = async (items, totalAmount) => {
+    try {
+      // Format items for discount calculation
+      const discountItems = items.map(item => ({
+        itemId: item.menuItem,
+        price: item.price,
+        quantity: item.quantity
+      }));
+      
+      console.log('Calculating discounts for items:', discountItems);
+      console.log('Total amount:', totalAmount);
+      
+      // Call the discount calculation API directly
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/discounts/calculate-bill`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          items: discountItems,
+          totalAmount
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error calculating discounts: ${response.statusText}`);
+      }
+      
+      const discountResult = await response.json();
+      console.log('Discount calculation result:', discountResult);
+      return discountResult;
+    } catch (error) {
+      console.error('Error calculating discounts:', error);
+      return null;
+    }
+  };
 
   const handlePlaceOrder = async () => {
     if (!customerDetails.name || !customerDetails.phone) {
@@ -144,35 +243,67 @@ const TablePage = () => {
           setOrderSuccessMessage('Items added to your existing order!');
         } else {
           // No active order - create a new one
+          const total = calculateTotal();
+          
+          // Calculate applicable discounts
+          const discountResult = await calculateDiscounts(orderItems, total);
+          
+          // Prepare order data with discount information
           const orderData = {
             items: orderItems,
-            totalAmount: calculateTotal(),
+            totalAmount: total,
             tableId: table._id,
             customerName: customerDetails.name,
             customerPhone: customerDetails.phone,
             sessionToken
           };
           
+          // Add discount information if available
+          if (discountResult && discountResult.totalSavings > 0) {
+            orderData.discounts = discountResult.appliedDiscounts || [];
+            orderData.discountAmount = discountResult.totalSavings || 0;
+            orderData.finalAmount = discountResult.finalTotal || total;
+            console.log('Applied discounts to order:', discountResult);
+          }
+          
           await createOrder(orderData);
           setOrderSuccess(true);
-          setOrderSuccessMessage('Your order has been placed successfully!');
+          setOrderSuccessMessage('Your order has been placed successfully!' + 
+            (discountResult && discountResult.totalSavings > 0 ? 
+              ` Discount applied: ₹${discountResult.totalSavings.toFixed(2)}` : ''));
         }
       } catch (fetchError) {
         console.error('Error checking existing orders:', fetchError);
         
         // Fallback to creating a new order if we can't check existing ones
+        const total = calculateTotal();
+        
+        // Calculate applicable discounts even in fallback path
+        const discountResult = await calculateDiscounts(orderItems, total);
+        
+        // Prepare order data with discount information
         const orderData = {
           items: orderItems,
-          totalAmount: calculateTotal(),
+          totalAmount: total,
           tableId: table._id,
           customerName: customerDetails.name,
           customerPhone: customerDetails.phone,
           sessionToken
         };
         
+        // Add discount information if available
+        if (discountResult && discountResult.totalSavings > 0) {
+          orderData.discounts = discountResult.appliedDiscounts || [];
+          orderData.discountAmount = discountResult.totalSavings || 0;
+          orderData.finalAmount = discountResult.finalTotal || total;
+          console.log('Applied discounts to order (fallback path):', discountResult);
+        }
+        
         await createOrder(orderData);
         setOrderSuccess(true);
-        setOrderSuccessMessage('Your order has been placed successfully!');
+        setOrderSuccessMessage('Your order has been placed successfully!' + 
+          (discountResult && discountResult.totalSavings > 0 ? 
+            ` Discount applied: ₹${discountResult.totalSavings.toFixed(2)}` : ''));
       }
       
       // Reset cart and close modal
@@ -186,9 +317,10 @@ const TablePage = () => {
     }
   };
 
-  const filteredMenu = selectedCategory === 'All' 
-    ? menuItems 
-    : menuItems.filter((i) => i.category === selectedCategory);
+  const filteredMenu = useMemo(() => {
+    if (selectedCategory === 'All') return menu;
+    return menu.filter(item => item.category === selectedCategory);
+  }, [menu, selectedCategory]);
 
   if (loading) {
     return (
@@ -447,7 +579,35 @@ const TablePage = () => {
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 mb-1 line-clamp-1">{item.name}</h3>
                     <p className="text-xs sm:text-sm md:text-base text-gray-600 line-clamp-2 mb-3 h-8 sm:h-10">{item.description}</p>
                     <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                      <span className="text-amber-700 font-bold text-base sm:text-lg md:text-xl">₹{item.price.toFixed(2)}</span>
+                      {/* Price display with discount if available */}
+                      <div>
+                        {(() => {
+                          const discount = getItemDiscount(item._id, item.category);
+                          const discountedPrice = calculateDiscountedPrice(item.price, discount);
+                          
+                          if (discount && discountedPrice !== null) {
+                            return (
+                              <div className="flex flex-col">
+                                <span className="text-amber-700 font-bold text-base sm:text-lg md:text-xl">
+                                  ₹{discountedPrice.toFixed(2)}
+                                </span>
+                                <span className="text-gray-500 line-through text-xs sm:text-sm">
+                                  ₹{item.price.toFixed(2)}
+                                </span>
+                                <span className="text-green-600 text-xs font-medium">
+                                  {discount.discountType === 'percentage' ? `${discount.discountValue}% off` : `₹${discount.discountValue} off`}
+                                </span>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <span className="text-amber-700 font-bold text-base sm:text-lg md:text-xl">
+                                ₹{item.price.toFixed(2)}
+                              </span>
+                            );
+                          }
+                        })()} 
+                      </div>
                       <button
                         onClick={() => addToCart(item)}
                         className="bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-md sm:rounded-lg transition-all text-xs sm:text-sm md:text-base flex items-center gap-1 shadow-sm hover:shadow group-hover:scale-105"

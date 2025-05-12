@@ -41,6 +41,20 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  discounts: {
+    type: Array,
+    default: []
+  },
+  discountAmount: {
+    type: Number,
+    default: 0
+  },
+  finalAmount: {
+    type: Number,
+    default: function() {
+      return this.totalAmount - (this.discountAmount || 0);
+    }
+  },
   kitchenNotes: {
     type: String,
     trim: true

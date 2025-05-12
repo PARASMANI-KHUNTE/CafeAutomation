@@ -407,10 +407,31 @@ const CustomerOrders = () => {
           `;
         }).join('')}
         
-        <div class="total">
+        ${order.discountAmount > 0 ? `
+        <div class="discount" style="display: flex; justify-content: space-between; margin-top: 10px; color: #666;">
+          <span>Subtotal</span>
+          <span>₹${order.totalAmount.toFixed(2)}</span>
+        </div>
+        <div class="discount" style="display: flex; justify-content: space-between; margin-top: 5px; background-color: #f0fff4; padding: 8px; border-radius: 4px; color: #38a169;">
+          <div>
+            <span style="font-weight: bold;">Discount</span>
+            <span style="margin-left: 8px; background-color: #c6f6d5; color: #22543d; font-size: 10px; padding: 2px 6px; border-radius: 10px;">OFFER APPLIED</span>
+          </div>
+          <span style="font-weight: bold;">-₹${order.discountAmount.toFixed(2)}</span>
+        </div>
+        <div class="savings" style="text-align: right; font-size: 12px; color: #38a169; margin-top: 4px;">
+          You saved ₹${order.discountAmount.toFixed(2)}!
+        </div>
+        <div class="total" style="display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; font-weight: bold;">
+          <span>Final Total</span>
+          <span>₹${(order.finalAmount || order.totalAmount - order.discountAmount).toFixed(2)}</span>
+        </div>
+        ` : `
+        <div class="total" style="display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; font-weight: bold;">
           <span>Total</span>
           <span>₹${order.totalAmount.toFixed(2)}</span>
         </div>
+        `}
         
         <div class="footer">
           <p>Thank you for your order!</p>
@@ -516,10 +537,33 @@ const CustomerOrders = () => {
                 </div>
 
                 <div className="border-t pt-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-semibold">Total:</span>
-                    <span className="text-lg">₹{order.totalAmount.toFixed(2)}</span>
-                  </div>
+                  {order.discountAmount > 0 ? (
+                    <div className="bg-gradient-to-r from-green-50 to-white p-3 rounded-lg mb-4 border border-green-200 shadow-sm">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-gray-700">Subtotal:</span>
+                        <span className="text-gray-700">₹{order.totalAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center">
+                          <span className="text-green-600 font-medium">Discount:</span>
+                          <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">OFFER APPLIED</span>
+                        </div>
+                        <span className="text-green-600 font-medium">-₹{order.discountAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-green-100">
+                        <span className="font-bold text-gray-800">Final Total:</span>
+                        <span className="text-lg font-bold text-gray-800">₹{(order.finalAmount || order.totalAmount - order.discountAmount).toFixed(2)}</span>
+                      </div>
+                      <div className="mt-2 text-xs text-green-600 text-right">
+                        You saved ₹{order.discountAmount.toFixed(2)}!
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="font-semibold">Total:</span>
+                      <span className="text-lg">₹{order.totalAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   
                   {/* Status message */}
                   <div className="bg-gray-50 p-3 rounded-lg mb-4">

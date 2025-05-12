@@ -281,10 +281,25 @@ const OrderHistoryPage = () => {
             }).join('') : ''}
           </tbody>
           <tfoot>
+            ${order.discountAmount > 0 ? `
+            <tr>
+              <td colspan="3" class="text-right">Subtotal:</td>
+              <td class="text-right">₹${order.totalAmount.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" class="text-right" style="color: #e53e3e;">Discount:</td>
+              <td class="text-right" style="color: #e53e3e;">-₹${order.discountAmount.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" class="text-right"><strong>Final Total:</strong></td>
+              <td class="text-right"><strong>₹${(order.finalAmount || order.totalAmount - order.discountAmount).toFixed(2)}</strong></td>
+            </tr>
+            ` : `
             <tr>
               <td colspan="3" class="text-right"><strong>Total:</strong></td>
               <td class="text-right"><strong>₹${order.totalAmount ? order.totalAmount.toFixed(2) : calculateOrderTotal(order).toFixed(2)}</strong></td>
             </tr>
+            `}
           </tfoot>
         </table>
         

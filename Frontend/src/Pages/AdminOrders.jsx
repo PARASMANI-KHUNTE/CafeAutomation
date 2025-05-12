@@ -282,10 +282,30 @@ const AdminOrders = () => {
                   </div>
                   
                   <div className="border-t mt-3 sm:mt-4 pt-3 sm:pt-4">
-                    <div className="flex justify-between items-center mb-3 sm:mb-4">
-                      <span className="font-semibold text-sm sm:text-base">Total:</span>
-                      <span className="text-base sm:text-lg font-bold text-amber-700">₹{order.totalAmount.toFixed(2)}</span>
-                    </div>
+                    {order.discountAmount > 0 ? (
+                      <div className="bg-gradient-to-r from-green-50 to-white p-2 rounded-lg mb-3 border border-green-200 shadow-sm">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs sm:text-sm text-gray-700">Subtotal:</span>
+                          <span className="text-xs sm:text-sm text-gray-700">₹{order.totalAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-1">
+                          <div className="flex items-center">
+                            <span className="text-xs sm:text-sm text-green-600 font-medium">Discount:</span>
+                            <span className="ml-1 bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded-full">OFFER</span>
+                          </div>
+                          <span className="text-xs sm:text-sm text-green-600 font-medium">-₹{order.discountAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-1 border-t border-green-100">
+                          <span className="text-xs sm:text-sm font-bold text-gray-800">Final Total:</span>
+                          <span className="text-sm sm:text-base font-bold text-amber-700">₹{(order.finalAmount || order.totalAmount - order.discountAmount).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-center mb-3 sm:mb-4">
+                        <span className="font-semibold text-sm sm:text-base">Total:</span>
+                        <span className="text-base sm:text-lg font-bold text-amber-700">₹{order.totalAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     
                     {/* Status Update Buttons */}
                     <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
@@ -433,10 +453,25 @@ const AdminOrders = () => {
                                 `;
                               }).join('')}
                               
-                              <div class="total">
+                              ${order.discountAmount > 0 ? `
+                              <div class="discount" style="display: flex; justify-content: space-between; margin-top: 10px; color: #666;">
+                                <span>Subtotal</span>
+                                <span>₹${order.totalAmount.toFixed(2)}</span>
+                              </div>
+                              <div class="discount" style="display: flex; justify-content: space-between; margin-top: 5px; color: #e53e3e;">
+                                <span>Discount</span>
+                                <span>-₹${order.discountAmount.toFixed(2)}</span>
+                              </div>
+                              <div class="total" style="display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; font-weight: bold;">
+                                <span>Final Total</span>
+                                <span>₹${(order.finalAmount || (order.totalAmount - order.discountAmount)).toFixed(2)}</span>
+                              </div>
+                              ` : `
+                              <div class="total" style="display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; font-weight: bold;">
                                 <span>Total</span>
                                 <span>₹${order.totalAmount.toFixed(2)}</span>
                               </div>
+                              `}
                               
                               <div class="footer">
                                 <p>Thank you for your order!</p>

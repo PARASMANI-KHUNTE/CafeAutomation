@@ -17,6 +17,7 @@ import TablePage from './Pages/TablePage'
 import DashboardPage from './Pages/DashboardPage'
 import AdminOrders from './Pages/AdminOrders'
 import TableManagement from './Pages/TableManagement'
+import DiscountManagement from './Pages/DiscountManagement'
 
 const ProtectedRoute = ({ children, isAuthenticated, userRole, requiredRole }) => {
   if (!isAuthenticated) {
@@ -72,6 +73,7 @@ const AppRoutes = () => {
         <Route path="orders" element={<AdminOrders />} />
         <Route path="order-history" element={<OrderHistoryPage />} />
         <Route path="tables" element={<TableManagement />} />
+        <Route path="discounts" element={<DiscountManagement />} />
       </Route>
 
       {/* Protected kitchen route */}
