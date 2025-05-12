@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, Loader, Image as ImageIcon } from 'lucide-react';
-import { menuAPI } from '../services/api';
+import { Plus, Edit, Trash2, X, Loader, Image as ImageIcon, Tag } from 'lucide-react';
+import { menuAPI, categoryAPI } from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const MenuManagementPage = () => {
   const [menuItems, setMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,11 +20,29 @@ const MenuManagementPage = () => {
   });
   const [imagePreview, setImagePreview] = useState(null);
 
-  const categories = ['Appetizers', 'Main Course', 'Desserts', 'Beverages', 'Specials'];
-
   useEffect(() => {
     fetchMenuItems();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await categoryAPI.getAllCategories();
+      // Filter to only active categories
+      setCategories(data.filter(category => category.isActive));
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+      toast.error('Failed to load categories');
+      // Fallback to default categories if API fails
+      setCategories([
+        { _id: '1', name: 'Appetizers' },
+        { _id: '2', name: 'Main Course' },
+        { _id: '3', name: 'Desserts' },
+        { _id: '4', name: 'Beverages' },
+        { _id: '5', name: 'Specials' }
+      ]);
+    }
+  };
 
   const fetchMenuItems = async () => {
     try {
@@ -266,8 +286,8 @@ const MenuManagementPage = () => {
                     >
                       <option value="">Select a category</option>
                       {categories.map(category => (
-                        <option key={category} value={category}>
-                          {category}
+                        <option key={category._id} value={category.name}>
+                          {category.name}
                         </option>
                       ))}
                     </select>

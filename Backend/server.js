@@ -71,12 +71,14 @@ const authRouter = require('./Router/AuthRouter.js');
 const menuRouter = require('./Router/MenuRouter.js');
 const orderRouter = require('./Router/OrderRouter.js');
 const tableRouter = require('./Router/TableRouter.js');
+const categoryRouter = require('./Router/CategoryRouter.js');
 
 // Use routers
 app.use('/api/auth', authRouter);
 app.use('/api/menu', menuRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/tables', tableRouter);
+app.use('/api/categories', categoryRouter);
 
 // Use HTTP server instead of Express app for Socket.io
 server.listen(port, () => {

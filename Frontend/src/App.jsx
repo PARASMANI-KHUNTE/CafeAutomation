@@ -4,6 +4,7 @@ import LoginPage from './Pages/LoginPage'
 import ForgotPassword from './Pages/ForgotPassword'
 import HomePage from './Pages/HomePage'
 import MenuManagementPage from './Pages/MenuManagementPage'
+import CategoryManagementPage from './Pages/CategoryManagementPage'
 import LandingPage from './Pages/LandingPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import StaffContent from './Pages/StaffContent'
@@ -65,6 +66,7 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="menu" element={<MenuManagementPage />} />
+        <Route path="categories" element={<CategoryManagementPage />} />
         <Route path="staff" element={<StaffContent />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="tables" element={<TableManagement />} />

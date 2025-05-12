@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BarChart2, Users, Coffee, LogOut, Table2 } from 'lucide-react';
+import { BarChart2, Users, Coffee, LogOut, Table2, Tag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const AdminNavbar = () => {
@@ -43,6 +43,20 @@ const AdminNavbar = () => {
           >
             <Coffee className="mr-3" size={20} />
             <span>Menu Management</span>
+          </NavLink>
+          
+          <NavLink
+            to="/home/categories"
+            className={({ isActive }) =>
+              `flex items-center p-3 rounded-lg transition-colors ${
+                isActive 
+                  ? 'bg-amber-700 text-white' 
+                  : 'text-amber-100 hover:bg-amber-700 hover:text-white'
+              }`
+            }
+          >
+            <Tag className="mr-3" size={20} />
+            <span>Categories</span>
           </NavLink>
           
           <NavLink
