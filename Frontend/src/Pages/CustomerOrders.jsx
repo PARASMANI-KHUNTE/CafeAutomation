@@ -246,57 +246,31 @@ const CustomerOrders = () => {
 
   // Handler for "Order Again" button - creates a new order with the same items
   const handleOrderAgain = (order) => {
-    // First check if we have a valid tableId
-    let tableId;
+    // Extract tableId from the order
+    let tableId = order.tableId;
+    let tableNumber;
     
-    if (order.tableId) {
-      // If tableId is an object with _id property
-      if (typeof order.tableId === 'object' && order.tableId._id) {
-        tableId = order.tableId._id;
-      } 
-      // If tableId is already a string ID
-      else if (typeof order.tableId === 'string') {
-        tableId = order.tableId;
-      }
+    // If tableId is an object (populated), get the _id and tableNumber
+    if (typeof tableId === 'object' && tableId !== null) {
+      tableNumber = tableId.tableNumber;
+      tableId = tableId._id;
+    } else {
+      // If we only have the ID, try to extract table number from the customer name or order info
+      tableNumber = order.tableNumber || '';
     }
     
-    // If no tableId is found, prompt the user to enter one
-    if (!tableId) {
-      const tableNumber = prompt('Please enter your table number:');
+    // If no tableNumber is found, prompt the user to enter one
+    if (!tableNumber) {
+      tableNumber = prompt('Please enter your table number:');
       if (!tableNumber) {
-        alert('Table number is required to place an order.');
+        toast.error('Table number is required to place a new order.');
         return;
       }
-      // Use the entered table number directly
-      tableId = tableNumber;
     }
     
-    // Create a new order with the same items
-    const newOrderData = {
-      items: order.items.map(item => ({
-        menuItem: typeof item.menuItem === 'object' ? item.menuItem._id : item.menuItem,
-        quantity: item.quantity,
-        price: item.price || (typeof item.menuItem === 'object' ? item.menuItem.price : 0),
-        notes: item.notes || ''
-      })),
-      tableId: tableId,
-      customerName: order.customerName || '',
-      customerPhone: order.customerPhone || '',
-      kitchenNotes: ''
-    };
-    
-    // Call the createOrder function from OrderContext
-    createOrder(newOrderData)
-      .then(() => {
-        // Show success message
-        alert('Your order has been placed successfully!');
-        // Navigate to the orders page to see the new order
-        navigate('/orders');
-      })
-      .catch(error => {
-        console.error('Error placing order:', error);
-        alert('Failed to place order. Please try again.');
-      });
+    // Redirect to the table page for creating a new order
+    toast.info('Redirecting to menu page to create a new order...');
+    navigate(`/table/${tableNumber}`);
   };
 
   // Handler for customer assistance request

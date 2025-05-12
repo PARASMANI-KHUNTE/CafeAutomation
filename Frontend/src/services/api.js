@@ -1,5 +1,6 @@
 import axios from 'axios';
 import config from '../config';
+import Cookies from 'js-cookie';
 
 const API_URL = config.API_URL;
 
@@ -164,16 +165,23 @@ export const orderAPI = {
 
   addMoreItems: async (data) => {
     // Extract orderId and other data
-    const { orderId, items, customerName, customerPhone } = data;
+    const { orderId, items, customerName, customerPhone, sessionToken: providedToken } = data;
     
-    // Add the session token for customer orders
-    const sessionToken = localStorage.getItem('sessionToken');
+    // Get session token from localStorage or use provided token
+    const sessionToken = providedToken || localStorage.getItem('sessionToken') || Cookies.get('sessionToken');
+    
+    if (!sessionToken) {
+      console.warn('No session token available for order');
+    }
+    
     const payload = { 
       items, 
       sessionToken,
       customerName,
       customerPhone 
     };
+    
+    console.log('Adding items to order with payload:', payload);
     
     // Use the correct endpoint path as defined in the router (/orders/:id/items)
     const response = await api.post(`/orders/${orderId}/items`, payload);

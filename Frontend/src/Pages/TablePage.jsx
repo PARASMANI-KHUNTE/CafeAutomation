@@ -99,6 +99,9 @@ const TablePage = () => {
         sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
         Cookies.set('sessionToken', sessionToken, { expires: 7 }); // Expires in 7 days
       }
+      
+      // Also store in localStorage for API calls
+      localStorage.setItem('sessionToken', sessionToken);
 
       // Prepare order items data
       const orderItems = cart.map(item => ({

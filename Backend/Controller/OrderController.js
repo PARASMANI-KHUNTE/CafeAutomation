@@ -3,18 +3,55 @@ const Table = require('../Model/Table');
 const socketManager = require('../Utils/SocketManager');
 
 const createOrder = async (req, res) => {
-    const { tableId, items, totalAmount, customerName, customerPhone } = req.body;
-    const sessionToken = req.headers['x-session-token']; // Get session token from header
-
-    if (!tableId) {
-        return res.status(400).json({ message: 'Table ID is required' });
-    }
-
-    if (!sessionToken) {
-        return res.status(400).json({ message: 'Session token is required' });
-    }
-
     try {
+        console.log('Create order request body:', JSON.stringify(req.body, null, 2));
+        
+        const { tableId, items, totalAmount, customerName, customerPhone, sessionToken: bodySessionToken } = req.body;
+        // Get session token from header or body
+        const sessionToken = req.headers['x-session-token'] || bodySessionToken || 'guest-' + Date.now();
+
+        console.log('Processing order with tableId:', tableId, 'and sessionToken:', sessionToken);
+
+        if (!tableId) {
+            return res.status(400).json({ message: 'Table ID is required' });
+        }
+        
+        // Validate items array
+        if (!items) {
+            return res.status(400).json({ message: 'Items are required' });
+        }
+        
+        if (!Array.isArray(items)) {
+            return res.status(400).json({ message: 'Items must be an array' });
+        }
+        
+        if (items.length === 0) {
+            return res.status(400).json({ message: 'Items array cannot be empty' });
+        }
+
+        // Validate each item in the array
+        const validatedItems = [];
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            console.log(`Processing item ${i}:`, JSON.stringify(item, null, 2));
+            
+            // Ensure each item has the required properties
+            if (!item.menuItem) {
+                return res.status(400).json({ 
+                    message: `Item at index ${i} is missing menuItem property`,
+                    item: item
+                });
+            }
+            
+            // Create a validated item object
+            validatedItems.push({
+                menuItem: item.menuItem,
+                quantity: item.quantity || 1,
+                price: item.price || 0,
+                notes: item.notes || ''
+            });
+        }
+
         // Check if there's an existing active order for this table
         const existingOrder = await Order.findOne({ 
             tableId,
@@ -28,16 +65,31 @@ const createOrder = async (req, res) => {
             });
         }
 
-        // Create new order with session token
-        const order = await Order.create({ 
+        // Create new order with session token and validated items
+        const orderData = { 
             tableId, 
-            items, 
-            totalAmount,
+            items: validatedItems, 
             sessionToken,
-            customerName,
-            customerPhone,
             status: 'pending'
-        });
+        };
+        
+        // Calculate totalAmount if not provided
+        if (totalAmount) {
+            orderData.totalAmount = totalAmount;
+        } else {
+            // Calculate total from the items
+            orderData.totalAmount = validatedItems.reduce((total, item) => {
+                return total + (item.price * item.quantity);
+            }, 0);
+        }
+        
+        // Add optional fields if they exist
+        if (customerName) orderData.customerName = customerName;
+        if (customerPhone) orderData.customerPhone = customerPhone;
+        
+        console.log('Creating order with data:', JSON.stringify(orderData, null, 2));
+        
+        const order = await Order.create(orderData);
 
         // Populate the menu items and table for the Socket.io event
         const populatedOrder = await Order.findById(order._id)
@@ -48,10 +100,9 @@ const createOrder = async (req, res) => {
         socketManager.emitNewOrder(populatedOrder);
 
         return res.status(201).json(order);
-    }
-    catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Server error' });
+    } catch (error) {
+        console.error('Error creating order:', error);
+        return res.status(500).json({ message: 'Server error', details: error.message });
     }
 }
 
@@ -126,9 +177,31 @@ const addMoreItems = async (req, res) => {
     const { id } = req.params;
     const { items, sessionToken, customerName, customerPhone } = req.body;
     
-    // Validate input
-    if (!items || !Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ message: 'Items array is required and cannot be empty' });
+    console.log('Adding items to order:', id);
+    console.log('Request body:', req.body);
+    
+    // Validate input with more detailed error messages
+    if (!items) {
+        return res.status(400).json({ message: 'Items are required' });
+    }
+    
+    if (!Array.isArray(items)) {
+        return res.status(400).json({ message: 'Items must be an array' });
+    }
+    
+    if (items.length === 0) {
+        return res.status(400).json({ message: 'Items array cannot be empty' });
+    }
+    
+    // Validate each item in the array
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (!item.menuItem) {
+            return res.status(400).json({ 
+                message: `Item at index ${i} is missing menuItem property`,
+                item: item
+            });
+        }
     }
 
     try {
@@ -143,10 +216,11 @@ const addMoreItems = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to modify this order' });
         }
 
-        // Only allow adding items if the order is in pending or accepted status
-        if (order.status !== 'pending' && order.status !== 'accepted') {
+        // Only allow adding items if the order is in pending, accepted, or preparing status
+        // Adding preparing status to allow adding items while the order is being prepared
+        if (!['pending', 'accepted', 'preparing'].includes(order.status)) {
             return res.status(400).json({ 
-                message: 'Cannot add items to an order that is already being prepared or completed'
+                message: 'Cannot add items to an order that is already completed or denied'
             });
         }
 
