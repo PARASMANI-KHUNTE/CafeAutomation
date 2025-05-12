@@ -10,7 +10,7 @@ const {
 const { verifyToken, isAdmin } = require('../Middleware/AuthMiddleware');
 
 // Create a new category (admin only) - temporarily bypassing admin check for testing
-router.post('/', verifyToken, createCategory);
+router.post('/', createCategory);
 
 // Update a category (admin only) - temporarily bypassing admin check for testing
 router.put('/:id', verifyToken, updateCategory);
@@ -19,9 +19,9 @@ router.put('/:id', verifyToken, updateCategory);
 router.delete('/:id', verifyToken, deleteCategory);
 
 // Get a single category by ID (all authenticated users)
-router.get('/:id', verifyToken, getCategory);
+router.get('/:id', getCategory);
 
 // Get all categories (all authenticated users)
-router.get('/', verifyToken, getAllCategories);
+router.get('/', getAllCategories);
 
 module.exports = router;
