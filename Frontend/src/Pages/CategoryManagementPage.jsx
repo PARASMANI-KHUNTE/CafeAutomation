@@ -26,8 +26,8 @@ const CategoryManagementPage = () => {
       setLoading(true);
       const data = await categoryAPI.getAllCategories();
       setCategories(data);
-    } catch (error) {
-      // Error is caught but not used
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
       setError('Failed to fetch categories');
       toast.error('Failed to fetch categories');
     } finally {
@@ -117,15 +117,15 @@ const CategoryManagementPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Category Management</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Category Management</h1>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-amber-700 transition-colors"
+            className="bg-amber-600 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center hover:bg-amber-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center sm:justify-start"
           >
-            <Plus size={20} className="mr-2" />
+            <Plus size={18} className="mr-2" />
             Add New Category
           </button>
         </div>
@@ -136,7 +136,8 @@ const CategoryManagementPage = () => {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        {/* Table for larger screens */}
+        <div className="hidden sm:block bg-white rounded-lg shadow-md overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -182,6 +183,7 @@ const CategoryManagementPage = () => {
                         <button
                           onClick={() => handleEdit(category)}
                           className="text-amber-600 hover:text-amber-900"
+                          aria-label="Edit category"
                         >
                           <Edit size={16} />
                         </button>
@@ -192,6 +194,7 @@ const CategoryManagementPage = () => {
                             }
                           }}
                           className="text-red-600 hover:text-red-900"
+                          aria-label="Delete category"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -203,24 +206,69 @@ const CategoryManagementPage = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Card layout for mobile */}
+        <div className="sm:hidden space-y-4">
+          {categories.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm p-4 text-center text-sm text-gray-500">
+              No categories found. Add a new category to get started.
+            </div>
+          ) : (
+            categories.map((category) => (
+              <div key={category._id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-base font-medium text-gray-900">{category.name}</h3>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {category.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 mb-3 line-clamp-2">{category.description || '-'}</p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => handleEdit(category)}
+                    className="p-2 bg-amber-50 text-amber-600 rounded-md hover:bg-amber-100"
+                    aria-label="Edit category"
+                  >
+                    <Edit size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Are you sure you want to delete ${category.name}?`)) {
+                        handleDelete(category._id);
+                      }
+                    }}
+                    className="p-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100"
+                    aria-label="Delete category"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal - improved for mobile */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {editingCategory ? 'Edit Category' : 'Add New Category'}
-                </h2>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={24} />
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+                {editingCategory ? 'Edit Category' : 'Add New Category'}
+              </h2>
+              <button
+                onClick={handleCloseModal}
+                className="text-gray-400 hover:text-gray-500"
+                aria-label="Close modal"
+              >
+                <X size={20} className="sm:w-6 sm:h-6" />
+              </button>
+            </div>
+            
+            <div className="p-4 sm:p-6">
 
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
@@ -233,8 +281,9 @@ const CategoryManagementPage = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-base"
                       required
+                      placeholder="Enter category name"
                     />
                   </div>
 
@@ -246,41 +295,43 @@ const CategoryManagementPage = () => {
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-base"
                       rows="3"
+                      placeholder="Enter category description (optional)"
                     />
                   </div>
 
-                  <div className="flex items-center">
+                  <div className="flex items-center py-2"> {/* Added padding for better touch target */}
                     <input
                       type="checkbox"
+                      id="isActive"
                       name="isActive"
                       checked={formData.isActive}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                      className="h-5 w-5 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                     />
-                    <label className="ml-2 block text-sm text-gray-900">
+                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900 cursor-pointer">
                       Active
                     </label>
                   </div>
                 </div>
 
-                <div className="mt-6 flex justify-end space-x-3">
+                <div className="mt-6 flex flex-col sm:flex-row sm:justify-end gap-3 sm:space-x-3">
                   <button
                     type="button"
                     onClick={handleCloseModal}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 w-full sm:w-auto text-center"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50"
+                    className="px-4 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 w-full sm:w-auto text-center"
                   >
                     {loading ? (
-                      <span className="flex items-center">
-                        <Loader size={20} className="animate-spin mr-2" />
+                      <span className="flex items-center justify-center">
+                        <Loader size={18} className="animate-spin mr-2" />
                         Saving...
                       </span>
                     ) : (

@@ -30,8 +30,8 @@ const MenuManagementPage = () => {
       const data = await categoryAPI.getAllCategories();
       // Filter to only active categories
       setCategories(data.filter(category => category.isActive));
-    } catch (err) {
-      console.error('Failed to fetch categories:', err);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
       toast.error('Failed to load categories');
       // Fallback to default categories if API fails
       setCategories([
@@ -48,8 +48,9 @@ const MenuManagementPage = () => {
     try {
       const data = await menuAPI.getAllMenu();
       setMenuItems(data);
-    } catch (err) {
+    } catch (error) {
       setError('Failed to fetch menu items');
+      console.error('Fetch error:', error);
     } finally {
       setLoading(false);
     }
@@ -118,8 +119,9 @@ const MenuManagementPage = () => {
       try {
         await menuAPI.deleteMenu(id);
         await fetchMenuItems();
-      } catch (err) {
+      } catch (error) {
         setError('Failed to delete menu item');
+        console.error('Delete error:', error);
       }
     }
   };
@@ -147,15 +149,15 @@ const MenuManagementPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Menu Management</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 ml-12 sm:ml-0">Menu Management</h1>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-amber-700 transition-colors"
+            className="bg-amber-600 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center hover:bg-amber-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center sm:justify-start"
           >
-            <Plus size={20} className="mr-2" />
+            <Plus size={18} className="mr-2" />
             Add New Item
           </button>
         </div>
@@ -166,10 +168,10 @@ const MenuManagementPage = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {menuItems.map((item) => (
             <div key={item._id} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="relative h-48">
+              <div className="relative h-40 sm:h-48">
                 <img
                   src={item.image}
                   alt={item.name}
@@ -178,30 +180,32 @@ const MenuManagementPage = () => {
                 <div className="absolute top-2 right-2 flex space-x-2">
                   <button
                     onClick={() => handleEdit(item)}
-                    className="bg-amber-600 text-white p-2 rounded-full hover:bg-amber-700 transition-colors"
+                    className="bg-amber-600 text-white p-1.5 sm:p-2 rounded-full hover:bg-amber-700 transition-colors"
+                    aria-label="Edit item"
                   >
-                    <Edit size={16} />
+                    <Edit size={14} className="sm:w-4 sm:h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(item._id)}
-                    className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors"
+                    className="bg-red-600 text-white p-1.5 sm:p-2 rounded-full hover:bg-red-700 transition-colors"
+                    aria-label="Delete item"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={14} className="sm:w-4 sm:h-4" />
                   </button>
                 </div>
               </div>
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                  <span className="text-amber-600 font-bold">₹{item.price}</span>
+              <div className="p-3 sm:p-4">
+                <div className="flex justify-between items-start mb-1 sm:mb-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate max-w-[70%]">{item.name}</h3>
+                  <span className="text-amber-600 font-bold text-sm sm:text-base whitespace-nowrap">₹{item.price}</span>
                 </div>
-                <p className="text-gray-600 text-sm mb-2">{item.description}</p>
+                <p className="text-gray-600 text-xs sm:text-sm mb-2 line-clamp-2">{item.description}</p>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">{item.category}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
+                  <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[50%]">{item.category}</span>
+                  <span className={`px-2 py-0.5 sm:py-1 rounded-full text-xs ${
                     item.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    {item.isAvailable ? 'Available' : 'Not Available'}
+                    {item.isAvailable ? 'Available' : 'Unavailable'}
                   </span>
                 </div>
               </div>
@@ -212,21 +216,22 @@ const MenuManagementPage = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
-                </h2>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+                {editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
+              </h2>
+              <button
+                onClick={handleCloseModal}
+                className="text-gray-400 hover:text-gray-500"
+                aria-label="Close modal"
+              >
+                <X size={20} className="sm:w-6 sm:h-6" />
+              </button>
+            </div>
+            
+            <div className="p-4 sm:p-6">
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
                   <div>

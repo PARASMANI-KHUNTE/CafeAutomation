@@ -6,7 +6,7 @@ const AdminLayout = ({ showFloatingBtn = true, children }) => {
     return (
         <div className="min-h-screen bg-gray-100">
             {/* Main Content */}
-            <div className="p-8">
+            <div className="h-full">
                 {children || <Outlet />}
             </div>
 

@@ -153,17 +153,20 @@ const AdminOrders = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminNavbar />
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-800">Live Orders</h1>
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+        {/* Responsive header with stacked layout on mobile */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-6">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 ml-0">Live Orders</h1>
           
-          <div className="flex items-center space-x-4">
-            <div className="relative">
+          {/* Responsive controls that stack on mobile and align horizontally on desktop */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:space-x-4 w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm"
+                aria-label="Filter orders"
               >
                 <option value="">All Orders</option>
                 <option value="pending">Pending</option>
@@ -177,7 +180,8 @@ const AdminOrders = () => {
             
             <button
               onClick={loadOrders}
-              className="flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+              className="flex items-center justify-center px-4 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 w-full sm:w-auto text-sm"
+              aria-label="Refresh orders"
             >
               <RefreshCw size={16} className="mr-2" />
               Refresh
@@ -200,39 +204,39 @@ const AdminOrders = () => {
             <p className="text-gray-600">No orders found.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredOrders.map((order) => (
               <div
                 key={order._id}
-                className="bg-white rounded-lg shadow-md overflow-hidden"
+                className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100"
               >
-                <div className="p-4 border-b">
+                <div className="p-3 sm:p-4 border-b">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="text-lg font-semibold">Order #{order._id.slice(-6)}</h3>
-                      <p className="text-sm text-gray-500 flex items-center">
-                        <Clock size={14} className="mr-1" />
+                      <h3 className="text-base sm:text-lg font-semibold">Order #{order._id.slice(-6)}</h3>
+                      <p className="text-xs sm:text-sm text-gray-500 flex items-center">
+                        <Clock size={12} className="mr-1" />
                         {formatDate(order.createdAt)}
                       </p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(order.status)}`}>
+                    <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm ${getStatusColor(order.status)}`}>
                       {order.status}
                     </span>
                   </div>
                   
                   {/* Customer Details */}
                   {(order.customerName || order.customerPhone) && (
-                    <div className="mb-3 bg-gray-50 p-2 rounded">
-                      <h4 className="text-sm font-medium text-gray-700 mb-1">Customer:</h4>
+                    <div className="mb-2 sm:mb-3 bg-gray-50 p-2 rounded">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1">Customer:</h4>
                       {order.customerName && (
-                        <p className="text-sm flex items-center">
-                          <User size={14} className="mr-1 text-gray-500" />
-                          {order.customerName}
+                        <p className="text-xs sm:text-sm flex items-center truncate">
+                          <User size={12} className="mr-1 text-gray-500 flex-shrink-0" />
+                          <span className="truncate">{order.customerName}</span>
                         </p>
                       )}
                       {order.customerPhone && (
-                        <p className="text-sm flex items-center">
-                          <Phone size={14} className="mr-1 text-gray-500" />
+                        <p className="text-xs sm:text-sm flex items-center">
+                          <Phone size={12} className="mr-1 text-gray-500 flex-shrink-0" />
                           {order.customerPhone}
                         </p>
                       )}
@@ -240,36 +244,36 @@ const AdminOrders = () => {
                   )}
                   
                   {/* Table Number */}
-                  <div className="mb-3">
-                    <p className="text-sm text-blue-600">
+                  <div className="mb-2 sm:mb-3">
+                    <p className="text-xs sm:text-sm text-blue-600">
                       Table: {getTableNumber(order)}
                     </p>
                   </div>
                   
                   {/* Kitchen Notes */}
                   {order.kitchenNotes && (
-                    <div className="mb-3 bg-yellow-50 p-2 rounded">
-                      <h4 className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                        <FileText size={14} className="mr-1" />
+                    <div className="mb-2 sm:mb-3 bg-yellow-50 p-2 rounded">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center">
+                        <FileText size={12} className="mr-1 flex-shrink-0" />
                         Notes:
                       </h4>
-                      <p className="text-sm">{order.kitchenNotes}</p>
+                      <p className="text-xs sm:text-sm line-clamp-2">{order.kitchenNotes}</p>
                     </div>
                   )}
                 </div>
                 
-                <div className="p-4">
-                  <h4 className="font-medium text-gray-700 mb-2">Items:</h4>
-                  <div className="space-y-2">
+                <div className="p-3 sm:p-4">
+                  <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Items:</h4>
+                  <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
                     {order.items.map((item, index) => (
-                      <div key={index} className="flex justify-between">
-                        <div>
-                          <span className="font-medium">{item.menuItem.name}</span>
+                      <div key={index} className="flex justify-between text-xs sm:text-sm">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <span className="font-medium truncate block">{item.menuItem.name}</span>
                           {item.notes && (
-                            <p className="text-xs text-gray-500">{item.notes}</p>
+                            <p className="text-xs text-gray-500 truncate">{item.notes}</p>
                           )}
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex-shrink-0">
                           <div className="text-gray-600">x{item.quantity}</div>
                           <div className="text-gray-800">₹{(item.price * item.quantity).toFixed(2)}</div>
                         </div>
@@ -277,25 +281,27 @@ const AdminOrders = () => {
                     ))}
                   </div>
                   
-                  <div className="border-t mt-4 pt-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="font-semibold">Total:</span>
-                      <span className="text-lg">₹{order.totalAmount.toFixed(2)}</span>
+                  <div className="border-t mt-3 sm:mt-4 pt-3 sm:pt-4">
+                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                      <span className="font-semibold text-sm sm:text-base">Total:</span>
+                      <span className="text-base sm:text-lg font-bold text-amber-700">₹{order.totalAmount.toFixed(2)}</span>
                     </div>
                     
                     {/* Status Update Buttons */}
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
                       {order.status === 'pending' && (
                         <>
                           <button
                             onClick={() => handleUpdateStatus(order._id, 'accepted')}
-                            className="py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            aria-label="Accept order"
                           >
                             Accept
                           </button>
                           <button
                             onClick={() => handleUpdateStatus(order._id, 'cancelled')}
-                            className="py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            className="py-2.5 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            aria-label="Cancel order"
                           >
                             Cancel
                           </button>
@@ -305,7 +311,8 @@ const AdminOrders = () => {
                       {order.status === 'accepted' && (
                         <button
                           onClick={() => handleUpdateStatus(order._id, 'preparing')}
-                          className="py-2 col-span-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                          className="py-2.5 sm:py-2 col-span-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                          aria-label="Start preparing order"
                         >
                           Start Preparing
                         </button>
@@ -314,7 +321,8 @@ const AdminOrders = () => {
                       {order.status === 'preparing' && (
                         <button
                           onClick={() => handleUpdateStatus(order._id, 'ready')}
-                          className="py-2 col-span-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                          className="py-2.5 sm:py-2 col-span-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                          aria-label="Mark order as ready"
                         >
                           Mark as Ready
                         </button>
@@ -323,7 +331,8 @@ const AdminOrders = () => {
                       {order.status === 'ready' && (
                         <button
                           onClick={() => handleUpdateStatus(order._id, 'completed')}
-                          className="py-2 col-span-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                          className="py-2.5 sm:py-2 col-span-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                          aria-label="Complete order"
                         >
                           Complete Order
                         </button>
