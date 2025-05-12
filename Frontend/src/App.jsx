@@ -5,6 +5,7 @@ import ForgotPassword from './Pages/ForgotPassword'
 import HomePage from './Pages/HomePage'
 import MenuManagementPage from './Pages/MenuManagementPage'
 import CategoryManagementPage from './Pages/CategoryManagementPage'
+import OrderHistoryPage from './Pages/OrderHistoryPage'
 import LandingPage from './Pages/LandingPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import StaffContent from './Pages/StaffContent'
@@ -69,6 +70,7 @@ const AppRoutes = () => {
         <Route path="categories" element={<CategoryManagementPage />} />
         <Route path="staff" element={<StaffContent />} />
         <Route path="orders" element={<AdminOrders />} />
+        <Route path="order-history" element={<OrderHistoryPage />} />
         <Route path="tables" element={<TableManagement />} />
       </Route>
 

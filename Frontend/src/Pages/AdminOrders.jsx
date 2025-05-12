@@ -51,10 +51,22 @@ const AdminOrders = () => {
   
   // Filter orders whenever the orders array or filter value changes
   useEffect(() => {
+    // Get today's date at midnight for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Filter orders to only show today's orders
+    const todaysOrders = orders.filter(order => {
+      const orderDate = new Date(order.createdAt);
+      orderDate.setHours(0, 0, 0, 0);
+      return orderDate.getTime() === today.getTime();
+    });
+    
+    // Apply status filter if set
     if (filter === '') {
-      setFilteredOrders(orders);
+      setFilteredOrders(todaysOrders);
     } else {
-      setFilteredOrders(orders.filter(order => order.status === filter));
+      setFilteredOrders(todaysOrders.filter(order => order.status === filter));
     }
   }, [orders, filter]);
   
@@ -63,7 +75,13 @@ const AdminOrders = () => {
     try {
       setLoading(true);
       const data = await orderAPI.getOrders();
-      setOrders(data);
+      
+      // Sort orders by creation date (newest first)
+      const sortedOrders = data.sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+      
+      setOrders(sortedOrders);
       setError('');
     } catch (err) {
       console.error('Error loading orders:', err);
@@ -222,13 +240,11 @@ const AdminOrders = () => {
                   )}
                   
                   {/* Table Number */}
-                  {order.tableId && (
-                    <div className="mb-3">
-                      <p className="text-sm text-blue-600">
-                        Table: {order.tableId.tableNumber || 'Unknown'}
-                      </p>
-                    </div>
-                  )}
+                  <div className="mb-3">
+                    <p className="text-sm text-blue-600">
+                      Table: {getTableNumber(order)}
+                    </p>
+                  </div>
                   
                   {/* Kitchen Notes */}
                   {order.kitchenNotes && (

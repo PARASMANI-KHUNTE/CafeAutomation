@@ -230,7 +230,39 @@ const DashboardPage = () => {
     }));
   };
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  // Status display configuration
+  const STATUS_CONFIG = {
+    pending: {
+      color: '#FFBB28',
+      icon: '⏳',
+      label: 'Pending',
+      description: 'Orders waiting to be processed'
+    },
+    preparing: {
+      color: '#0088FE',
+      icon: '👨‍🍳',
+      label: 'Preparing',
+      description: 'Orders currently being prepared'
+    },
+    ready: {
+      color: '#00C49F',
+      icon: '✅',
+      label: 'Ready',
+      description: 'Orders ready for pickup/delivery'
+    },
+    completed: {
+      color: '#8884D8',
+      icon: '🏁',
+      label: 'Completed',
+      description: 'Successfully delivered orders'
+    },
+    denied: {
+      color: '#FF8042',
+      icon: '❌',
+      label: 'Denied',
+      description: 'Cancelled or rejected orders'
+    }
+  };
 
   if (loading) {
     return (
@@ -314,26 +346,46 @@ const DashboardPage = () => {
 
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-lg font-semibold text-gray-700 mb-4">Order Status</h2>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={getOrdersByStatus(filterOrdersByTimeRange(orders, timeRange))}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {getOrdersByStatus(filterOrdersByTimeRange(orders, timeRange)).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="space-y-4">
+              {(() => {
+                const statusData = getOrdersByStatus(filterOrdersByTimeRange(orders, timeRange));
+                const totalOrders = statusData.reduce((sum, item) => sum + item.value, 0) || 1; // Avoid division by zero
+                
+                return Object.keys(STATUS_CONFIG).map(statusKey => {
+                  const status = statusKey.charAt(0).toUpperCase() + statusKey.slice(1);
+                  const statusObj = statusData.find(s => s.name === status) || { value: 0 };
+                  const percentage = (statusObj.value / totalOrders) * 100;
+                  const config = STATUS_CONFIG[statusKey];
+                  
+                  return (
+                    <div key={statusKey} className="relative">
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center">
+                          <span className="mr-2" role="img" aria-label={status}>{config.icon}</span>
+                          <span className="font-medium">{config.label}</span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <span className="font-semibold">{statusObj.value}</span> orders 
+                          <span className="ml-1 text-xs">({percentage.toFixed(1)}%)</span>
+                        </div>
+                      </div>
+                      
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="h-2.5 rounded-full" 
+                          style={{
+                            width: `${percentage}%`,
+                            backgroundColor: config.color,
+                            transition: 'width 1s ease-in-out'
+                          }}
+                        ></div>
+                      </div>
+                      
+                      <p className="text-xs text-gray-500 mt-1">{config.description}</p>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>

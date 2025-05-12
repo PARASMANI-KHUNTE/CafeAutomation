@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BarChart2, Users, Coffee, LogOut, Table2, Tag } from 'lucide-react';
+import { BarChart2, Users, Coffee, LogOut, Table2, Tag, FileText, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const AdminNavbar = () => {
@@ -71,6 +71,34 @@ const AdminNavbar = () => {
           >
             <Users className="mr-3" size={20} />
             <span>Staff Management</span>
+          </NavLink>
+          
+          <NavLink
+            to="/home/orders"
+            className={({ isActive }) =>
+              `flex items-center p-3 rounded-lg transition-colors ${
+                isActive 
+                  ? 'bg-amber-700 text-white' 
+                  : 'text-amber-100 hover:bg-amber-700 hover:text-white'
+              }`
+            }
+          >
+            <ShoppingBag className="mr-3" size={20} />
+            <span>Current Orders</span>
+          </NavLink>
+          
+          <NavLink
+            to="/home/order-history"
+            className={({ isActive }) =>
+              `flex items-center p-3 rounded-lg transition-colors ${
+                isActive 
+                  ? 'bg-amber-700 text-white' 
+                  : 'text-amber-100 hover:bg-amber-700 hover:text-white'
+              }`
+            }
+          >
+            <FileText className="mr-3" size={20} />
+            <span>Order History</span>
           </NavLink>
           
           <NavLink
